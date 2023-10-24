@@ -7,19 +7,25 @@ using namespace std;
 
 
 class SimplePlayer : public Player {
-    public:
+    private:
         string name;
         vector<Card> hand;
-
-        SimplePlayer(const string &player_name) {
-            name = player_name;
-        }
+    public:
+        SimplePlayer(const string &player_name) : name(player_name) {}
         const string &get_name() const override {
             return name;
         }
         void add_card(const Card &c) override{
             hand.push_back(c);
         }
+
+        void helper_trump(int &r2num, int i, Suit &nextsuit) const {
+            if((hand.at(i).is_face_or_ace() 
+                && hand.at(i).is_trump(nextsuit))){
+                r2num++; 
+            }
+        }
+        
         bool make_trump(const Card &upcard, bool is_dealer, int round, 
             Suit &order_up_suit) const override {
             // ROUND 1
@@ -28,8 +34,8 @@ class SimplePlayer : public Player {
                 for(int i = 0; i < hand.size(); i++){
                     // Trump card that is face/ace  
                     if((hand.at(i).is_face_or_ace() && 
-                    hand.at(i).is_trump(upcard.get_suit()))){
-                    r1num++; 
+                        hand.at(i).is_trump(upcard.get_suit()))){
+                        r1num++; 
                     }
                 }
                 if(r1num >= 2){
@@ -50,10 +56,7 @@ class SimplePlayer : public Player {
                     int r2num = 0; 
                     for(int i = 0; i < hand.size(); i++){
                         // Trump card that is face/ace  
-                        if((hand.at(i).is_face_or_ace() 
-                            && hand.at(i).is_trump(nextsuit))){
-                            r2num++; 
-                        }
+                        helper_trump(r2num, i, nextsuit);
                     }
 
                     if(r2num >= 1){
@@ -81,7 +84,7 @@ class SimplePlayer : public Player {
             Card highestCard = Card(TWO, Suit_next(trump)); //guarantees not a trump card
             int count_trump = 0;
             for(size_t i = 0; i < hand.size(); ++i) {
-                if(hand[i].is_trump(trump)) {
+                if(hand.at(i).is_trump(trump)) {
                     count_trump++;
                 }
             }
@@ -110,45 +113,59 @@ class SimplePlayer : public Player {
                 return highestCard;
             }
         }
-Card play_card(const Card& led_card, Suit trump) override {
-		// play the highest card that follows suit otherwise play the lowest card
-		Card highest_followed = hand[0];
-		Card lowest_non = hand[0];
-
-		int highest_loc = 0;
-		int lowest_loc = 0;
-
-		bool has_follow = false;
-
-		for(int i = 0; i < hand.size(); ++i) {
-			Card& card = hand[i];
-
-			if(!has_follow && (card.get_suit(trump) == led_card.get_suit(trump))) {
-				has_follow = true;
-			}
-			
-			if(has_follow && 
-                card.get_suit(trump) == led_card.get_suit(trump) &&
-				(Card_less(highest_followed, card, led_card, trump) ||
-				highest_followed.get_suit(trump) != led_card.get_suit(trump))) { 
-				highest_followed = card;
-				highest_loc = i;
-			}
-
-			if(Card_less(card, lowest_non, trump)) {
-				lowest_non = card;
-				lowest_loc = i;
-			}
-		}
-		if(has_follow) {
-			hand.erase(hand.begin() + highest_loc);
-			return highest_followed;
-		}
-		else {
-			hand.erase(hand.begin() + lowest_loc);
-			return lowest_non;
-		}
-	}
+        Card play_card(const Card &led_card, Suit trump) override { 
+            Card highestCard = Card(TWO, led_card.get_suit());
+            Card lowestCard = Card(JACK, trump);
+            int removeIndex = -1;
+            bool can_follow_suit = false;
+            for(size_t i = 0; i < hand.size(); ++i) {
+            if(led_card.is_left_bower(trump)) {
+            if(hand.at(i).get_suit() == Suit_next(led_card.get_suit()) && 
+            !hand.at(i).is_left_bower(trump)) {
+            can_follow_suit = true;
+            break;
+            }
+            }
+            else if((hand.at(i).get_suit() == led_card.get_suit() && 
+            !hand.at(i).is_left_bower(trump)) || 
+            (hand.at(i).is_left_bower(trump) 
+            && led_card.get_suit() == trump)) {
+            can_follow_suit = true;
+            break;
+            }
+            }
+            if(can_follow_suit) { 
+            for(size_t i = 0; i < hand.size(); ++i) {
+            if((led_card.is_left_bower(trump)) && hand.at(i).get_suit() == 
+            Suit_next(led_card.get_suit()) && 
+            !hand.at(i).is_left_bower(trump) 
+            && Card_less(highestCard, hand.at(i), led_card, trump)) {
+            highestCard = hand.at(i);
+            removeIndex = i;
+            }
+            else if(((hand.at(i).get_suit() == led_card.get_suit() && 
+            !hand.at(i).is_left_bower(trump)) || 
+            (hand.at(i).is_left_bower(trump) && 
+            led_card.get_suit() == trump)) 
+            && Card_less(highestCard, hand.at(i), led_card, trump)){
+            highestCard = hand.at(i);
+            removeIndex = i;
+            }
+            }
+            hand.erase(hand.begin() + removeIndex);
+            return highestCard;
+            }
+            else {
+            for(size_t i = 0; i < hand.size(); ++i) {
+            if(Card_less(hand.at(i), lowestCard, trump)) { // lowest card
+            lowestCard = hand.at(i);
+            removeIndex = i;
+            }
+            }
+            hand.erase(hand.begin() + removeIndex);
+            return lowestCard;
+            }
+        }
 
         // Maximum number of cards in a player's hand
         static const int MAX_HAND_SIZE = 5;
@@ -159,13 +176,11 @@ Card play_card(const Card& led_card, Suit trump) override {
 };
 
 class HumanPlayer : public Player{
-    public:
+    private:
         string name; 
         vector<Card> hand; 
-
-        HumanPlayer(const std::string &playername) {
-            name = playername;
-        }
+    public:
+        HumanPlayer(const std::string &player_name) : name(player_name) {}
 
         const string &get_name() const override {
             return name;
@@ -256,6 +271,5 @@ std::ostream & operator<<(std::ostream &os, const Player &p) {
   os << p.get_name();
   return os;
 }
-
 
 
