@@ -62,7 +62,11 @@ class Game {  // WRITE CTOR AND DTOR
 
     void deal(){
       int numcardsdealt[8] = {3, 2, 3, 2, 2, 3, 2, 3};
+      if(dealer > 3){
+        dealer = 0; 
+      } 
 
+      currentplayer = dealer + 1; 
       for(int i = 0; i < 8; i++){
         if(currentplayer > 3){
           currentplayer = 0; 
@@ -98,6 +102,7 @@ class Game {  // WRITE CTOR AND DTOR
         }
         if(orderedup == true){
           cout << players.at(currentplayer)->get_name() << " orders up " << trump << endl; 
+          players.at(dealer)->add_and_discard(upcard);   
           if(currentplayer == 0 || currentplayer == 2){
             teamthatorderedup = 1; 
           }
@@ -129,7 +134,7 @@ class Game {  // WRITE CTOR AND DTOR
             cout << players.at(currentplayer)->get_name() << " passes" << endl;  
           }
           if(orderedup == true){
-            cout << players.at(currentplayer)->get_name() << " orders up " << trump << endl;  
+            cout << players.at(currentplayer)->get_name() << " orders up " << trump << endl;
             if(currentplayer == 0 || currentplayer == 2){
             teamthatorderedup = 1; 
             }
@@ -151,6 +156,9 @@ class Game {  // WRITE CTOR AND DTOR
       currentplayer = leader;
       if(currentplayer > 3){
         currentplayer = 0; 
+      } 
+      if(dealer > 3){
+        dealer = 0; 
       } 
       if(leader > 3){
         leader = 0; 
@@ -180,6 +188,12 @@ class Game {  // WRITE CTOR AND DTOR
     }
 
     void play_hand(){
+      if(leader > 3){
+        leader = 0; 
+      }
+      if(dealer > 3){
+        dealer = 0; 
+      }
       if(shuffled == "shuffle"){
         shuffle(); 
       }
@@ -206,7 +220,6 @@ class Game {  // WRITE CTOR AND DTOR
         cout << endl; 
         leader = trickwinner;
 
-
         if(trickwinner == 0 || trickwinner == 2){
           team1tricks++;
         }
@@ -215,15 +228,12 @@ class Game {  // WRITE CTOR AND DTOR
         }
 
         // reset 
-        round = 0; 
-        if(leader > 3){
-          leader = 0; 
-        }
-        if(dealer > 3){
-        dealer = 0; 
-        }
+        round = 1; 
         // cout << "hand " << hand << " round " << round << " leader " << leader << " currentplayer " << currentplayer << " team1tricks " << team1tricks << " team2tricks " << team2tricks << endl; 
       }
+      //cout << team1tricks << endl; 
+      //cout << team2tricks << endl; 
+
 
       bool march = false; 
       bool euchred = false; 
@@ -242,23 +252,23 @@ class Game {  // WRITE CTOR AND DTOR
         }
       }
       else if(teamthatorderedup == 2){
-        if(team2tricks == 3 || team1tricks == 4){
+        if(team2tricks == 3 || team2tricks == 4){
           team2score = team2score + 1; 
         }
         if(team2tricks == 5){   // MARCH
           team2score = team2score + 2; 
           march = true;
         }
-        if(team1tricks == 3 || team2tricks == 4 || team2tricks == 5){   // EUCHRED
+        if(team1tricks == 3 || team1tricks == 4 || team1tricks == 5){   // EUCHRED
           team1score = team1score + 2; 
           euchred = true; 
         }
       }
 
-      if(team1score > team2score){ // TEAM 1 WINS
+      if(team1tricks > team2tricks){ // TEAM 1 WINS
         cout << players.at(0)->get_name() << " and " << players.at(2)->get_name() << " win the hand" << endl; 
       }
-      else if(team2score > team1score){ // TEAM 2 WINS
+      else if(team2tricks > team1tricks){ // TEAM 2 WINS
         cout << players.at(1)->get_name() << " and " << players.at(3)->get_name() << " win the hand" << endl; 
       }
       else{
@@ -273,7 +283,10 @@ class Game {  // WRITE CTOR AND DTOR
       }
 
       cout << players.at(0)->get_name() << " and " << players.at(2)->get_name() << " have " << team1score << " points" << endl; 
-      cout << players.at(1)->get_name() << " and " << players.at(3)->get_name() << " have " << team2score << " points" << endl; 
+      cout << players.at(1)->get_name() << " and " << players.at(3)->get_name() << " have " << team2score << " points" << endl;
+      team1tricks = 0; 
+      team2tricks = 0; 
+ 
     }
     
     void play(){
@@ -281,12 +294,17 @@ class Game {  // WRITE CTOR AND DTOR
         play_hand(); 
         hand++; 
         dealer++;
+        if(dealer > 3){
+          dealer = 0; 
+        }
         leader = dealer+1; 
-        round = 0; 
-        team1tricks = 0; 
-        team2tricks = 0; 
+        if(leader > 3){
+        leader = 0; 
+        }
+        round = 1; 
         pack.reset();  
         cout << endl; 
+        
       }
       if(team1score > team2score){
         cout << players.at(0)->get_name() << " and " << players.at(2)->get_name() << " win"; 
