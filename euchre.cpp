@@ -15,7 +15,7 @@
 using namespace std;
 
 
-class Game {  // WRITE CTOR AND DTOR 
+class Game {  
   private:
     ifstream& instream; 
     string shuffled; 
@@ -28,7 +28,7 @@ class Game {  // WRITE CTOR AND DTOR
     Card upcard; 
     Suit trump; 
     int leader; 
-    int currentplayer;  // player to the left gets first cards
+    int currentplayer;  
     int team1tricks;
     int team2tricks; 
     int team1score; 
@@ -80,71 +80,65 @@ class Game {  // WRITE CTOR AND DTOR
       }
     }
 
+    void lessthan3(){
+      if(currentplayer > 3){ 
+        currentplayer = 0;
+      } 
+    }
+
+    void determineteam(){
+      if(currentplayer == 0 || currentplayer == 2){
+        teamthatorderedup = 1; 
+      }
+      if(currentplayer == 1 || currentplayer == 3){
+        teamthatorderedup = 2; 
+      }
+    }
+    void order(bool &orderedup){
+      if (currentplayer == dealer){ 
+        orderedup = 
+        players.at(currentplayer)->make_trump(upcard, true, round, trump);
+      }
+      else{
+        orderedup = 
+        players.at(currentplayer)->make_trump(upcard, false, round, trump);
+      }
+      if(orderedup == false){ 
+            cout << players.at(currentplayer)->get_name() 
+            << " passes" << endl;}
+    }
+
     void make_trump(){
-      int currentplayer = dealer + 1; 
+      currentplayer = dealer + 1; 
       bool orderedup = false;
 
       for(int i = 0; i < players.size() ; i++){
-        if(currentplayer > 3){
-          currentplayer = 0; 
-        } 
-        
-        if (currentplayer == dealer){ 
-          orderedup = players.at(currentplayer)->make_trump(upcard, true, round, trump);
-        }
-        else{
-          orderedup = players.at(currentplayer)->make_trump(upcard, false, round, trump);
-        }
+        lessthan3(); 
+        order(orderedup); 
 
-
-        if(orderedup == false){
-          cout << players.at(currentplayer)->get_name() << " passes" << endl;  
-        }
         if(orderedup == true){
-          cout << players.at(currentplayer)->get_name() << " orders up " << trump << endl; 
+          cout << players.at(currentplayer)->get_name() 
+          << " orders up " << trump << endl; 
           players.at(dealer)->add_and_discard(upcard);   
-          if(currentplayer == 0 || currentplayer == 2){
-            teamthatorderedup = 1; 
-          }
-          if(currentplayer == 1 || currentplayer == 3){
-            teamthatorderedup = 2; 
-          }
+          determineteam();
           break;  
         }
-        
         currentplayer++; 
       }
 
       if(orderedup == false){
         round = 2; 
         for(int i = 0; i < players.size(); i++){
-          if(currentplayer > 3){
-            currentplayer = 0; 
-          } 
+          lessthan3(); 
+          order(orderedup); 
           
-          if (currentplayer == dealer){ 
-            orderedup = players.at(currentplayer)->make_trump(upcard, true, round, trump);
-          }
-          else{
-            orderedup = players.at(currentplayer)->make_trump(upcard, false, round, trump);
-          }
-
-
-          if(orderedup == false){
-            cout << players.at(currentplayer)->get_name() << " passes" << endl;  
-          }
           if(orderedup == true){
-            cout << players.at(currentplayer)->get_name() << " orders up " << trump << endl;
-            if(currentplayer == 0 || currentplayer == 2){
-            teamthatorderedup = 1; 
-            }
-            if(currentplayer == 1 || currentplayer == 3){
-              teamthatorderedup = 2; 
-            }
+            cout << players.at(currentplayer)->get_name() 
+            << " orders up " << trump << endl;
+            determineteam();
             break; 
-          }
-          
-          currentplayer++; 
+          } 
+        currentplayer++; 
         }
       }
     }
@@ -176,7 +170,8 @@ class Game {  // WRITE CTOR AND DTOR
           currentplayer = 0; 
         } 
         Card playedcard = players.at(currentplayer)->play_card(led, trump);
-        cout << playedcard << " played by " << players.at(currentplayer)->get_name() << endl;
+    cout << playedcard << " played by " << 
+    players.at(currentplayer)->get_name() << endl;
         if(Card_less(highestcard, playedcard, led, trump)){
           highestcard = playedcard;
           trickwinner = currentplayer; 
@@ -187,54 +182,7 @@ class Game {  // WRITE CTOR AND DTOR
       
     }
 
-    void play_hand(){
-      if(leader > 3){
-        leader = 0; 
-      }
-      if(dealer > 3){
-        dealer = 0; 
-      }
-      if(shuffled == "shuffle"){
-        shuffle(); 
-      }
-      deal(); 
-      cout << "Hand " << hand << endl;  
-      if(leader > 3){
-          leader = 0; 
-        }
-      if(dealer > 3){
-        dealer = 0; 
-      }
-      cout << players.at(dealer)->get_name() << " deals" << endl;  
-
-      upcard = pack.deal_one();
-      cout << upcard << " turned up" << endl;   
-      cout << endl; 
-
-      make_trump(); 
-      cout << endl; 
-      
-      for(int i = 0; i < 5; i++){
-        int trickwinner = play_trick(); 
-        cout << players.at(trickwinner)->get_name() << " takes the trick" << endl; 
-        cout << endl; 
-        leader = trickwinner;
-
-        if(trickwinner == 0 || trickwinner == 2){
-          team1tricks++;
-        }
-        if(trickwinner == 1 || trickwinner == 3){
-          team2tricks++;
-        }
-
-        // reset 
-        round = 1; 
-        // cout << "hand " << hand << " round " << round << " leader " << leader << " currentplayer " << currentplayer << " team1tricks " << team1tricks << " team2tricks " << team2tricks << endl; 
-      }
-      //cout << team1tricks << endl; 
-      //cout << team2tricks << endl; 
-
-
+    void determinewinners(){
       bool march = false; 
       bool euchred = false; 
 
@@ -266,13 +214,12 @@ class Game {  // WRITE CTOR AND DTOR
       }
 
       if(team1tricks > team2tricks){ // TEAM 1 WINS
-        cout << players.at(0)->get_name() << " and " << players.at(2)->get_name() << " win the hand" << endl; 
+        cout << players.at(0)->get_name() << " and " << players.at(2)->get_name() 
+        << " win the hand" << endl; 
       }
       else if(team2tricks > team1tricks){ // TEAM 2 WINS
-        cout << players.at(1)->get_name() << " and " << players.at(3)->get_name() << " win the hand" << endl; 
-      }
-      else{
-        // WHAT TO DO WHEN THEY ARE EQUAL?
+        cout << players.at(1)->get_name() << " and " << players.at(3)->get_name() 
+        << " win the hand" << endl; 
       }
 
       if(march){
@@ -282,11 +229,60 @@ class Game {  // WRITE CTOR AND DTOR
         cout << "euchred!" << endl; 
       }
 
-      cout << players.at(0)->get_name() << " and " << players.at(2)->get_name() << " have " << team1score << " points" << endl; 
-      cout << players.at(1)->get_name() << " and " << players.at(3)->get_name() << " have " << team2score << " points" << endl;
+      cout << players.at(0)->get_name() << " and " << players.at(2)->get_name() 
+      << " have " << team1score << " points" << endl; 
+      cout << players.at(1)->get_name() << " and " << players.at(3)->get_name() 
+      << " have " << team2score << " points" << endl;
       team1tricks = 0; 
       team2tricks = 0; 
- 
+    }
+
+    void play_hand(){
+      if(leader > 3){
+        leader = 0; 
+      }
+      if(dealer > 3){
+        dealer = 0; 
+      }
+      if(shuffled == "shuffle"){
+        shuffle(); 
+      }
+      deal(); 
+      cout << "Hand " << hand << endl;  
+      if(leader > 3){
+          leader = 0; 
+        }
+      if(dealer > 3){
+        dealer = 0; 
+      }
+      cout << players.at(dealer)->get_name() << " deals" << endl;  
+
+      upcard = pack.deal_one();
+      cout << upcard << " turned up" << endl;   
+      //cout << endl; 
+
+      make_trump(); 
+      cout << endl; 
+      
+      for(int i = 0; i < 5; i++){
+        int trickwinner = play_trick(); 
+        cout << players.at(trickwinner)->get_name() << " takes the trick" << endl; 
+        cout << endl; 
+        leader = trickwinner;
+
+        if(trickwinner == 0 || trickwinner == 2){
+          team1tricks++;
+        }
+        if(trickwinner == 1 || trickwinner == 3){
+          team2tricks++;
+        }
+
+        // reset 
+        round = 1; 
+        
+      }
+      
+      determinewinners(); 
     }
     
     void play(){
@@ -307,14 +303,27 @@ class Game {  // WRITE CTOR AND DTOR
         
       }
       if(team1score > team2score){
-        cout << players.at(0)->get_name() << " and " << players.at(2)->get_name() << " win"; 
+        cout << players.at(0)->get_name() << " and " << players.at(2)->get_name() 
+        << " win!";
+        cout << endl; 
       }else if(team2score > team1score){
-        cout << players.at(1)->get_name() << " and " << players.at(3)->get_name() << " win"; 
+        cout << players.at(1)->get_name() << " and " << players.at(3)->get_name() 
+        << " win!"; 
+        cout << endl;
       }
+      cout << endl; 
     }
 };
 
 int main(int argc, char* argv[]) {
+
+  if(argc != 12) {
+    cout << "Usage: euchre.exe PACK_FILENAME [shuffle|noshuffle] "
+     << "POINTS_TO_WIN NAME1 TYPE1 NAME2 TYPE2 NAME3 TYPE3 "
+     << "NAME4 TYPE4" << endl;
+     return 1;
+  }
+
   string filein = argv[1]; 
   string shuffle = argv[2]; ; 
   int points = atoi(argv[3]); 
@@ -327,12 +336,28 @@ int main(int argc, char* argv[]) {
   string name3 = argv[10]; 
   string type3 = argv[11];
 
+      if(points < 1 || points > 100 || (shuffle != "shuffle" && 
+        shuffle != "noshuffle") || (type0 != "Simple" && type0 != "Human") 
+        || (type1 != "Simple" && type1 != "Human") || (type2 != 
+        "Simple" && type2 != "Human") || (type3 != "Simple" 
+        && type3 != "Human")) {
+            cout << "Usage: euchre.exe PACK_FILENAME [shuffle|noshuffle] "
+            << "POINTS_TO_WIN NAME1 TYPE1 NAME2 TYPE2 NAME3 TYPE3 "
+            << "NAME4 TYPE4" << endl;
+            return 1;
+    }
+
   ifstream instream; 
   instream.open(filein);
   if (!instream.is_open()) {
     cout << "Error opening " << filein << endl;
       return 1; 
   }  
+
+  cout << argv[0] << " " << argv[1] << " " << argv[2] << " " << argv[3] << " " << argv[4]
+  << " " << argv[5] << " " << argv[6] << " " <<
+  argv[7] << " " << argv[8] << " " << argv[9] << " " << argv[10] << " " << argv[11] 
+  << " " << endl;
 
   Player* one = Player_factory(name0, type0);
   Player* two = Player_factory(name1, type1);
@@ -347,11 +372,10 @@ int main(int argc, char* argv[]) {
 
   Game game(instream, shuffle, points, playerset);
   game.play();
-  // game.deal() CHECKED TO MAKE SURE ALL 4 PLAYERS GOT 5 CARDS
 
 
   for (size_t i = 0; i < playerset.size(); ++i) {
      delete playerset[i];
   }
-
+  return 0;
 }
